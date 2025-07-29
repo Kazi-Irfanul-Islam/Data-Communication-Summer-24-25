@@ -1,0 +1,99 @@
+Nyquist Bit Rate Calculation for a Noiseless Channel
+close all;
+clc;
+fs=8000;
+t=0:1/fs:1-1/fs;
+cx=1.1*sin(2*pi*100*t)+1.3*cos(2*pi*300*t)+1.5*sin(2*pi*2000*t);
+bandwidth = obw(cx, fs);
+L=2;
+BitRate=2*bandwidth*log2(L);
+disp(BitRate);
+
+
+
+
+Calculation of SNR for a Noisy Composite Signal
+close all;
+clc;
+fs=8000;
+t=0:1/fs:1-1/fs;
+signal = 1.5*sin(2*pi*2*t)+0.9*cos(2*pi*10*t)+1.1*sin(2*pi*20*t) + 0.13*randn(size(t));
+SNR_composite = snr(signal);
+disp(SNR_composite);
+
+
+performance task for lab report
+A_id = 2;
+B_id = 2;
+C_id = 4;
+D_id = 9;
+E_id = 4;
+F_id = 2;
+G_id = 9;
+H_id = 3;
+
+fs = 8000;
+t = 0:1/fs:1-1/fs;
+
+A1 = (A_id + B_id + H_id);
+A2 = (B_id + C_id + H_id);
+A3 = (A_id + C_id + E_id);
+
+freq_plot_scale_factor = 1;
+freq1_plot = (C_id + D_id + H_id) * freq_plot_scale_factor;
+freq2_plot = (D_id + E_id + H_id) * freq_plot_scale_factor;
+freq3_plot = (E_id + F_id + G_id) * freq_plot_scale_factor;
+
+freq_calc_scale_factor = 100;
+freq1_calc = (C_id + D_id + H_id) * freq_calc_scale_factor;
+freq2_calc = (D_id + E_id + H_id) * freq_calc_scale_factor;
+freq3_calc = (E_id + F_id + G_id) * freq_calc_scale_factor;
+
+x_sin1_plot = A1 * sin(2 * pi * freq1_plot * t);
+x_sin2_plot = A2 * sin(2 * pi * freq2_plot * t);
+x_sin3_plot = A3 * sin(2 * pi * freq3_plot * t);
+
+disp('Behold! The three distinct sine waves have been exquisitely generated for plotting.');
+
+figure;
+set(gcf, 'Color', 'white');
+set(gca, 'Color', 'white');
+
+hold on;
+
+plot(t, x_sin1_plot, 'Color', [0 0.4470 0.7410], 'LineWidth', 1.5, 'DisplayName', ['Sine Wave 1 (F=', num2str(freq1_plot), ' Hz)']);
+
+plot(t, x_sin2_plot, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5, 'DisplayName', ['Sine Wave 2 (F=', num2str(freq2_plot), ' Hz)']);
+
+plot(t, x_sin3_plot, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5, 'DisplayName', ['Sine Wave 3 (F=', num2str(freq3_plot), ' Hz)']);
+
+title('The Harmonious Unveiling: Three Distinct Sine Waves (Visually Clear Frequencies)');
+xlabel('Time (s)');
+ylabel('Amplitude');
+legend('show', 'Location', 'bestoutside');
+grid on;
+hold off;
+
+s_noise = (C_id + D_id + H_id) / 30;
+x_noise_calc = s_noise * randn(size(t));
+x_composite_for_calc = x_sin1_calc + x_sin2_calc + x_sin3_calc + x_noise_calc;
+
+SNR_composite_task = snr(x_composite_for_calc);
+disp(' ');
+disp('The calculated SNR of the conceptual composite signal (using original high frequencies):');
+disp(SNR_composite_task);
+
+bandwidth_task = obw(x_composite_for_calc, fs);
+disp(' ');
+disp('The measured bandwidth of this remarkable conceptual signal (using original high frequencies):');
+disp(bandwidth_task);
+
+Capacity_task = bandwidth_task * log2(1 + SNR_composite_task);
+disp(' ');
+disp('The channel''s maximum capacity, revealing its ultimate potential (using original high frequencies):');
+disp(Capacity_task);
+
+L_task = 2^(Capacity_task / (2 * bandwidth_task));
+disp(' ');
+disp('The signal level (L) necessary to achieve this glorious data rate (based on original high frequencies):');
+disp(L_task);
