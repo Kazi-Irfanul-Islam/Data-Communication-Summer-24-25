@@ -1,0 +1,172 @@
+(a) Time domain and Frequency domain representations of signal_x
+matlab
+
+
+Copy code
+clc; clear; close all;
+
+% Given parameters
+a1 = 0 + 1; % G+1
+a2 = 0 + 2; % F+2
+a3 = 4 + 3; % E+3
+
+f1 = 4 + 1; % E+1
+f2 = 0 + 2; % F+2
+f3 = 0 + 3; % G+3
+
+Fs = 1000;          % Sampling frequency (Hz)
+T = 1/Fs;           % Sampling period
+t_end = 1;          % duration 1 second
+t = 0:T:t_end-T;    % time vector
+
+% Composite Signal
+x1 = a1*cos(2*pi*f1*t);
+x2 = a2*sin(2*pi*f2*t);
+x3 = a3*cos(2*pi*f3*t);
+signal_x = x1 + x2 + x3;
+
+% Plot Time domain
+figure('Name','Time and Frequency Domain of signal_x');
+subplot(2,1,1);
+plot(t, signal_x);
+title('Time Domain Signal (signal\_x)');
+xlabel('Time (s)');
+ylabel('Amplitude');
+xlim([0 1]);
+grid on;
+
+% Frequency domain via FFT
+N = length(signal_x);
+X_f = fft(signal_x);
+f = Fs*(0:(N/2))/N;
+
+P2 = abs(X_f/N);
+P1 = P2(1:N/2+1);
+P1(2:end-1) = 2*P1(2:end-1);
+
+subplot(2,1,2);
+stem(f, P1,'filled');
+title('Frequency Domain Signal (Magnitude Spectrum)');
+xlabel('Frequency (Hz)');
+ylabel('|P1(f)|');
+xlim([0 10]);
+grid on;
+(b) Quantize signal_x in 4 equally distributed levels using quantiz()
+matlab
+Copy code
+clc; clear; close all;
+
+% Parameters
+a1 = 0 + 1;
+a2 = 0 + 2;
+a3 = 4 + 3;
+
+f1 = 4 + 1;
+f2 = 0 + 2;
+f3 = 0 + 3;
+
+Fs = 1000; T = 1/Fs; t_end = 1;
+t = 0:T:t_end-T;
+
+x1 = a1*cos(2*pi*f1*t);
+x2 = a2*sin(2*pi*f2*t);
+x3 = a3*cos(2*pi*f3*t);
+signal_x = x1 + x2 + x3;
+
+% Use one cycle (0 to 1 sec)
+one_cycle_t = t(t <= 1);
+one_cycle_signal = signal_x(1:length(one_cycle_t));
+
+% Quantization parameters
+levels = 4;
+xmin = min(one_cycle_signal);
+xmax = max(one_cycle_signal);
+d = (xmax - xmin)/levels;
+
+partition = xmin + d:d:xmax - d;
+codebook = xmin + d/2:d:xmax - d/2;
+
+[idx, quantized_signal] = quantiz(one_cycle_signal, partition, codebook);
+
+% Plot original and quantized signal
+figure('Name','Quantization with 4 Levels');
+subplot(2,1,1);
+plot(one_cycle_t, one_cycle_signal);
+title('Original Signal - One Cycle');
+xlabel('Time (s)');
+ylabel('Amplitude');
+xlim([0 1]);
+ylim([xmin-1 xmax+1]);
+grid on;
+
+subplot(2,1,2);
+stairs(one_cycle_t, quantized_signal, 'r','LineWidth',1.5);
+title('Quantized Signal with 4 Levels');
+xlabel('Time (s)');
+ylabel('Amplitude');
+xlim([0 1]);
+ylim([xmin-1 xmax+1]);
+grid on;
+(c) Quantize signal_x in 8 equally distributed levels WITHOUT quantiz()
+matlab
+Copy code
+clc; clear; close all;
+
+% Parameters
+a1 = 0 + 1;
+a2 = 0 + 2;
+a3 = 4 + 3;
+
+f1 = 4 + 1;
+f2 = 0 + 2;
+f3 = 0 + 3;
+
+Fs = 1000; T = 1/Fs; t_end = 1;
+t = 0:T:t_end-T;
+
+x1 = a1*cos(2*pi*f1*t);
+x2 = a2*sin(2*pi*f2*t);
+x3 = a3*cos(2*pi*f3*t);
+signal_x = x1 + x2 + x3;
+
+% One cycle signal
+one_cycle_t = t(t <= 1);
+one_cycle_signal = signal_x(1:length(one_cycle_t));
+
+% Quantize into 8 levels manually
+levels = 8;
+xmin = min(one_cycle_signal);
+xmax = max(one_cycle_signal);
+d = (xmax - xmin)/levels;
+
+quantized_signal = zeros(size(one_cycle_signal));
+
+for i = 1:length(one_cycle_signal)
+    idx = floor((one_cycle_signal(i) - xmin)/d);
+    if idx >= levels
+        idx = levels - 1;
+    elseif idx < 0
+        idx = 0;
+    end
+    quantized_signal(i) = xmin + (idx + 0.5)*d;
+end
+
+% Plot original and quantized signals
+figure('Name','Quantization with 8 Levels (Manual)');
+subplot(2,1,1);
+plot(one_cycle_t, one_cycle_signal);
+title('Original Signal - One Cycle');
+xlabel('Time (s)');
+ylabel('Amplitude');
+xlim([0 1]);
+ylim([xmin-1 xmax+1]);
+grid on;
+
+subplot(2,1,2);
+stairs(one_cycle_t, quantized_signal, 'm','LineWidth',1.5);
+title('Quantized Signal with 8 Levels (Manual)');
+xlabel('Time (s)');
+ylabel('Amplitude');
+xlim([0 1]);
+ylim([xmin-1 xmax+1]);
+grid on;

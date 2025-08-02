@@ -1,0 +1,204 @@
+clc;
+clear all;
+close all;
+time_duration = 0.2;
+
+%% Analog-like signal's representation
+% Analog signal generation is not possible in MATLAB
+a = [0.4 0.6 0.8]; % amplitude array for composite signal
+f = [5 12 20];     % frequency array for composite signal
+
+analog_t = 0:0.0001:time_duration;
+analog_sig = a(1)*sin(2*pi*f(1)*analog_t) + ...
+             a(2)*cos(2*pi*f(2)*analog_t) + ...
+             a(3)*sin(2*pi*f(3)*analog_t + pi/4);
+
+figure
+subplot(1,2,1)
+plot(analog_t, analog_sig,'linewidth',1.5)
+grid on
+xlabel('time in seconds')
+ylabel('amplitude in volts')
+title('analog signal')
+
+%% Sampling Frequency
+fs = 250;
+ts = 1/fs;
+
+%% Sampling
+samp_t = 0:ts:time_duration;
+samp_sig = a(1)*sin(2*pi*f(1)*samp_t) + ...
+           a(2)*cos(2*pi*f(2)*samp_t) + ...
+           a(3)*sin(2*pi*f(3)*samp_t + pi/4);
+
+subplot(1,2,2)
+plot(samp_t, samp_sig,'o','linewidth',1.5)
+grid on
+xlabel('time in seconds')
+ylabel('amplitude in volts')
+title(['sampled signal for ',num2str(fs),' Hz sampling frequency'])
+
+%% Levels for Quantization
+L = 8;
+
+%% Quantizing
+delta = (max(samp_sig) - min(samp_sig)) / (L - 1); % step size
+quant_sig = min(samp_sig) + round((samp_sig - min(samp_sig)) / delta) * delta; % quantized signal
+
+figure
+subplot(1,2,1)
+plot(samp_t, samp_sig,'o','linewidth',1.5)
+grid on
+xlabel('time in seconds')
+ylabel('amplitude in volts')
+title('sampled signal')
+
+subplot(1,2,2)
+plot(samp_t, quant_sig,'x','linewidth',1.5);
+grid on
+xlabel('time in seconds')
+ylabel('amplitude in volts')
+title('quantized samples')
+
+%% Number of Bits/Sample
+nb = log2(L);
+
+%% Encoding
+i = round((samp_sig - min(samp_sig)) / delta); % index for encoding
+
+% Check if Communications Toolbox is available for de2bi
+if exist('de2bi', 'file')
+    dig_data_matrix = de2bi(i, nb, 'left-msb'); % encoded binary bits as a matrix
+else
+    % Manual binary encoding if de2bi is not available
+    dig_data_matrix = zeros(length(i), nb);
+    for k = 1:length(i)
+        bin_str = dec2bin(i(k), nb);
+        dig_data_matrix(k,:) = bin_str - '0'; % convert char to numeric array
+    end
+end
+
+dig_data = reshape(dig_data_matrix', 1, []); % encoded binary bits as an array
+
+disp(['The index values for encoding from quantization of the sampled signal are: ', num2str(i)])
+disp(['The converted bits from the input analog signal are: ', num2str(dig_data)])
+
+
+performance task:
+
+
+
+
+A)
+
+clc; clear; close all;
+
+% Parameters
+F = 2; G = 2;
+a = [F+1, F+3, F+2, F+4]; % [3 5 4 6]
+f = [G+5, G+7, G+1, G+2]; % [7 9 3 4]
+
+% Time vectors
+time_duration = 0.2;
+analog_t = 0:0.0001:time_duration;
+fs = 300;                % sampling frequency
+ts = 1/fs;
+samp_t = 0:ts:time_duration;
+
+% Analog signal
+analog_sig = a(1)*sin(2*pi*f(1)*analog_t) + ...
+             a(2)*cos(2*pi*f(2)*analog_t) + ...
+             a(3)*sin(2*pi*f(3)*analog_t) + ...
+             a(4)*sin(2*pi*f(4)*analog_t);
+
+% Sampled signal
+samp_sig = a(1)*sin(2*pi*f(1)*samp_t) + ...
+           a(2)*cos(2*pi*f(2)*samp_t) + ...
+           a(3)*sin(2*pi*f(3)*samp_t) + ...
+           a(4)*sin(2*pi*f(4)*samp_t);
+
+% Quantization parameters
+L = 16; % number of levels (will be explained in part c)
+delta = (max(samp_sig) - min(samp_sig)) / (L - 1);
+quant_sig = min(samp_sig) + round((samp_sig - min(samp_sig)) / delta) * delta;
+
+% Plotting
+figure
+subplot(1,3,1)
+plot(analog_t, analog_sig, 'LineWidth',1.5)
+title('Analog Signal')
+xlabel('Time (s)')
+ylabel('Amplitude')
+grid on
+
+subplot(1,3,2)
+stem(samp_t, samp_sig, 'filled')
+title(['Sampled Signal (fs = ', num2str(fs), ' Hz)'])
+xlabel('Time (s)')
+ylabel('Amplitude')
+grid on
+
+subplot(1,3,3)
+stem(samp_t, quant_sig, 'filled')
+title(['Quantized Signal (L = ', num2str(L), ')'])
+xlabel('Time (s)')
+ylabel('Amplitude')
+grid on
+
+
+
+
+B)
+% Number of bits per sample
+n_bits = log2(L);
+
+% Quantization indices for encoding
+indices = round((samp_sig - min(samp_sig)) / delta);
+
+% Binary encoding of indices
+if exist('de2bi', 'file')
+    dig_data_matrix = de2bi(indices, n_bits, 'left-msb');
+else
+    dig_data_matrix = zeros(length(indices), n_bits);
+    for k = 1:length(indices)
+        bin_str = dec2bin(indices(k), n_bits);
+        dig_data_matrix(k,:) = bin_str - '0';
+    end
+end
+
+% Flatten bits into 1-D array (bitstream)
+dig_data = reshape(dig_data_matrix', 1, []);
+
+% Display results
+disp('Quantization indices:');
+disp(indices);
+
+disp('Digital data bits:');
+disp(dig_data);
+
+
+C)
+
+clc; clear;
+
+% Given parameters
+SNR_dB_min = 25;      % Minimum required SNR in dB
+B = 150;              % Channel bandwidth in Hz
+
+% Calculate minimum sampling frequency using Nyquist theorem
+fs_min = 2 * B;
+
+% Calculate number of bits per sample (n) from SNR formula:
+% SNR_dB = 6.02 * n + 1.76
+n_bits = ceil((SNR_dB_min - 1.76) / 6.02);  % Round up to nearest integer
+
+% Calculate number of quantization levels
+L = 2^n_bits;
+
+% Display the results
+fprintf('Minimum sampling frequency (fs) = %.2f Hz\n', fs_min);
+fprintf('Minimum number of bits per sample (n) = %d bits\n', n_bits);
+fprintf('Number of quantization levels (L) = %d\n', L);
+
+
+
